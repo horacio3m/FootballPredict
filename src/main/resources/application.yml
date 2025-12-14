@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: FootballPredict
+
+football:
+  data:
+    api:
+      base-url: https://api.football-data.org/v4
+      token: ${FOOTBALL_DATA_API_KEY}
+
