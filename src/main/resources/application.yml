@@ -8,3 +8,7 @@ football:
       base-url: https://api.football-data.org/v4
       token: ${FOOTBALL_DATA_API_KEY}
 
+openai:
+  api:
+    key: ${OPENAI_API_KEY}
+

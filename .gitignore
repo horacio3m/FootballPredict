@@ -34,3 +34,6 @@ build/
 
 ### Environment Variables ###
 .env
+
+### Course Materials ###
+MCP_IMPLEMENTATION_GUIDE.md
