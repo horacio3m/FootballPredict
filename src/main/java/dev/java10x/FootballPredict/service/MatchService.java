@@ -1,10 +1,13 @@
 package dev.java10x.FootballPredict.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import dev.java10x.FootballPredict.client.FootballDataClient;
 import dev.java10x.FootballPredict.dto.MatchFilters;
@@ -30,6 +33,19 @@ public class MatchService {
                         return filterByTeam(response, filters.getTeam());
                     }
                     return response;
+                })
+                .onErrorResume(WebClientResponseException.class, ex -> {
+                    if (ex.getStatusCode() == HttpStatus.BAD_REQUEST) {
+                        String responseBody = ex.getResponseBodyAsString();
+                        Map<String, Object> errorResponse = new HashMap<>();
+                        errorResponse.put("error", "Invalid request parameters. The API returned a 400 Bad Request.");
+                        errorResponse.put("message", "Please check your date filters. The API typically returns data for current and upcoming matches.");
+                        if (responseBody != null && !responseBody.isEmpty()) {
+                            errorResponse.put("apiMessage", responseBody);
+                        }
+                        return Mono.just(errorResponse);
+                    }
+                    return Mono.error(ex);
                 });
     }
 

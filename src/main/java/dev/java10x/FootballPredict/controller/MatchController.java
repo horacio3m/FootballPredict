@@ -41,7 +41,12 @@ public class MatchController {
         }
         
         return matchService.getMatches(filters)
-                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .<ResponseEntity<?>>map(response -> {
+                    if (response.containsKey("error")) {
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+                    }
+                    return ResponseEntity.ok(response);
+                })
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
 
@@ -57,6 +62,22 @@ public class MatchController {
             if (!isValidDate(filters.getDateTo())) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(createErrorResponse("Invalid dateTo format. Expected YYYY-MM-DD"));
+            }
+        }
+        
+        if (filters.hasDateFrom() && filters.hasDateTo()) {
+            LocalDate from = LocalDate.parse(filters.getDateFrom(), DATE_FORMATTER);
+            LocalDate to = LocalDate.parse(filters.getDateTo(), DATE_FORMATTER);
+            
+            if (from.isAfter(to)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("dateFrom must be before or equal to dateTo"));
+            }
+            
+            long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(from, to);
+            if (daysBetween > 30) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("Date range cannot exceed 30 days. Please use a smaller date range."));
             }
         }
         

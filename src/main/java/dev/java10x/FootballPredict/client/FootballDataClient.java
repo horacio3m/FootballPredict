@@ -41,7 +41,19 @@ public class FootballDataClient {
         return webClient.get()
                 .uri(uriFunction)
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {});
+                .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(), 
+                    response -> response.bodyToMono(String.class)
+                        .flatMap(body -> {
+                            System.err.println("API Error Response: " + body);
+                            return Mono.error(new RuntimeException("API returned error: " + body));
+                        }))
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .doOnError(error -> {
+                    System.err.println("Error calling Football Data API: " + error.getClass().getSimpleName() + " - " + error.getMessage());
+                    if (error.getCause() != null) {
+                        System.err.println("Caused by: " + error.getCause().getMessage());
+                    }
+                });
     }
 }
 
